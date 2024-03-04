@@ -10,6 +10,8 @@ import edu.policy.model.data.Session;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.util.*;
 
 public class GreedyPerfectSecrecy extends GreedyAlgorithm {
@@ -146,7 +148,7 @@ public class GreedyPerfectSecrecy extends GreedyAlgorithm {
             logger.info(String.format("%d cuesets being detected.", onDetect.size() + pbdOnDetect.size()));
         }
 
-
+        //int level = 1;
         // main while loop
         while (!cuesets.isEmpty()) {
 
@@ -220,7 +222,58 @@ public class GreedyPerfectSecrecy extends GreedyAlgorithm {
                     logger.info(String.format("%d cuesets being detected.", onDetect.size() + pbdOnDetect.size()));
                 }
             }
+            /*
+            if(level == 1){
+                ArrayList<Cell> cellHolder = new ArrayList<Cell>();
+                Set<Cell> printCells = new HashSet<>();
+                int lim;
+                for (int i = 0; i < cuesets.size(); i++){
+                    lim = cuesets.get(i).getCells().size();
+                    for (int j = 0; j < lim; j++){
+                        cellHolder.add(cuesets.get(i).getCells().get(j));
+                    }
+                }
+                for (int i = 0; i < cellHolder.size(); i++){
+                    printCells.add(cellHolder.get(i));
+                }
+                try{
+                    File cFile = new File("C:\\Users\\Nick\\Desktop\\spinMeRound.txt");
+                    FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\spinMeRound.txt",true);
+                    if (cFile.createNewFile()){
+                        writer.write("Perfect Deniability");
+                        writer.write(System.lineSeparator());
+                    }
+                    else{
+                        writer.write("% New Perfect Deniability %");
+                        writer.write(System.lineSeparator());
+                    }
+                    writer.write("Total cuesets: ");
+                    writer.write(Integer.toString(cuesets.size()));
+                    writer.write(System.lineSeparator());
+                    writer.write("Unique Cue Number: ");
+                    writer.write(Integer.toString(printCells.size()));
+                    writer.write(System.lineSeparator());
+                    writer.write("Unique Cues: ");
+                    writer.write(System.lineSeparator());
 
+                    writer.write("Full Set of Cues: ");
+                    writer.write(System.lineSeparator());
+                    writer.write("Full Set Size: ");
+                    writer.write(Integer.toString(cellHolder.size()));
+                    writer.write(System.lineSeparator());
+
+                    writer.write(System.lineSeparator());
+                    writer.write(System.lineSeparator());
+                    writer.close();
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+            level++;
+
+             */
         }
     }
 

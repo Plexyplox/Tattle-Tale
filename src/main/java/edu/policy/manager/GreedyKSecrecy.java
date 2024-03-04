@@ -10,6 +10,9 @@ import edu.policy.model.data.Session;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -61,12 +64,16 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
      * @return truehide list of hidden cells
      */
     public List<Cell> greedyKDenBreadthFirst(List<Cell> senCells) {
-
+        HashMap<Cell,Integer> cellHolder = new HashMap<>();
         int level = 1;
         List<Cell> trueHide = new ArrayList<>(senCells); // true hide list of all time
         List<Cell> trackTrueHide = new ArrayList<>(); // true hide for each level
 
         List<CueSet> onDetectTrueHide = null;
+        byte[] array = new byte[7]; // length is bounded by 7
+        new Random().nextBytes(array);
+        String generatedString = new String(array, Charset.forName("UTF-8"));
+        String check = new String(String.valueOf((Objects.hash(generatedString))));
 
         if (!hideCells.containsAll(senCells))
             hideCells = Utils.unionCells(hideCells, senCells);
@@ -165,10 +172,12 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                         }
                     }
                     trueHide.addAll(trackTrueHide);
+
                 }
 
             }
-
+            List<CueSet> pruneHolder = new ArrayList<>();
+            List<Cell> thePruned = new ArrayList<>();
             if (level == 1) {
                 List<CueSet> bestCueSets = new ArrayList<>();
                 for (Cell cell: trueHide) {
@@ -176,16 +185,46 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     List<CueSet> prunedCueSets = KPrune(cell, cueSetsToPrune);
                     if (prunedCueSets != null)
                         bestCueSets.addAll(prunedCueSets);
+                    pruneHolder.addAll(cueSetsToPrune);
+                    pruneHolder.removeAll(bestCueSets);
                 }
-
                 List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
                 trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
                 trueHide.addAll(trackTrueHide);
             }
 
+            if ((pruneHolder != null) && (level == 1)){
+                pruneHolder.forEach(p -> thePruned.addAll(p.getCells()));
+                List<Cell> cleanPrune = new ArrayList<>(new HashSet<>(thePruned));
+                cleanPrune.forEach(c -> cellHolder.put(c,0));
+                try{
+                    FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\spinMeRound.txt",true);
+                    writer.write(System.lineSeparator());
+                    writer.write("% K-Percentile Data %");
+                    writer.write(System.lineSeparator());
+                    writer.write("k-value = ");
+                    writer.write(Double.toString(k_percentage));
+                    writer.write(System.lineSeparator());
+                    writer.write("Pruned Cuesize: ");
+                    writer.write(Integer.toString(thePruned.size()));
+                    writer.write(System.lineSeparator());
+                    writer.write("Unique Cue Number: ");
+                    writer.write(Integer.toString(cellHolder.size()));
+                    writer.write(System.lineSeparator());
+                    writer.write("Unique Cues: ");
+                    writer.write(Integer.toString(trueHide.size()));
+                    writer.write(System.lineSeparator());
+                    writer.write("Full Set of Cues: ");
+                    writer.write(System.lineSeparator());
 
-
-
+                    writer.write(System.lineSeparator());
+                    writer.write(System.lineSeparator());
+                    writer.close();
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
             logger.info(String.format("%d-th level: %d cells in the true hide set.", cuesetDetectorInvokeCounter, trueHide.size()));
             hiddenCellsFanOut.add(trueHide.size());
             level += 1;
@@ -197,6 +236,63 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
 
                 // Get the cuesets of tohide cell lists
                 onDetect = cueDetector.detect(schemaDependencies, toHide);
+                if (level > 1){
+                    List<Cell> flatDetect = new ArrayList<>();
+                    onDetect.forEach(o -> flatDetect.addAll(o.getCells()));
+                    List<Cell> cleanDetect = new ArrayList<>(new HashSet<>(flatDetect));
+                    int cnt = 0;
+                    try{
+                        FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\kUSeeIt.txt",true);
+                        writer.write(System.lineSeparator());
+                        writer.write("% K-Percentile Data %");
+                        writer.write(System.lineSeparator());
+                        writer.write("k-value = ");
+                        writer.write(Double.toString(k_percentage));
+                        writer.write(System.lineSeparator());
+                        for (int i = 0; i < cleanDetect.size(); i++){
+                            for (int j = 0; j < cellHolder.size(); j++){
+                                if (cellHolder.containsKey(cleanDetect.get(i))){
+                                    cellHolder.replace(cleanDetect.get(i),cellHolder.get(cleanDetect.get(i)) + 1);
+                                    cnt++;
+                                }
+                            }
+                        }
+                        writer.write("Run: ");
+                        writer.write(check);
+                        writer.write(System.lineSeparator());
+                        writer.write("At level ");
+                        writer.write(Integer.toString(level));
+                        writer.write(" cell was redetected: ");
+                        writer.write(Integer.toString(cnt));
+                        writer.write(" times");
+                        writer.write(System.lineSeparator());
+                        writer.write(System.lineSeparator());
+                        writer.close();
+                    }
+                    catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\cueReCount.txt",true);
+                    writer.write("Cue Redetect Data");
+                    writer.write(System.lineSeparator());
+                    writer.write("Run: ");
+                    writer.write(check);
+                    writer.write(System.lineSeparator());
+                    writer.write("Level: ");
+                    writer.write(Integer.toString(level));
+                    writer.write(System.lineSeparator());
+                    for (Map.Entry<Cell, Integer> entry : cellHolder.entrySet()) {
+                        writer.write("Key: " + entry.getKey() + ", Redetect: " + entry.getValue());
+                        writer.write(System.lineSeparator());
+                    }
+                    writer.write(System.lineSeparator());
+                    writer.close();
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
                 if (Utils.listEqualsIgnoreOrder(toHide, trackTrueHide))
                     onDetectTrueHide = onDetect;
                 else
