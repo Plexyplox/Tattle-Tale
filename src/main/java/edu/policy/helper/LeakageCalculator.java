@@ -102,7 +102,7 @@ public class LeakageCalculator {
 
                         }
                         else
-                            throw new java.lang.Error("LeakageCalculator (joint_state): " +
+                            throw new Error("LeakageCalculator (joint_state): " +
                                     "STRING attribute type cannot have range operators!");
 
                         break;
@@ -196,7 +196,7 @@ public class LeakageCalculator {
                     case TIMESTAMP:
                     case DATE:
                     case TIME:
-                        throw new java.lang.Error("LeakageCalculator (joint_state): Unsupported attribute type.");
+                        throw new Error("LeakageCalculator (joint_state): Unsupported attribute type.");
                 }
 
                 stateOfTargetCell.checkFullLeakage();
@@ -336,7 +336,7 @@ public class LeakageCalculator {
                / (parentCell.getMaxDomain() - parentCell.getMinDomain());
 
         else
-            throw new java.lang.Error("LeakageCalculator (computeLeakageToParent): Unsupported attribute type.");
+            throw new Error("LeakageCalculator (computeLeakageToParent): Unsupported attribute type.");
 
     }
 
