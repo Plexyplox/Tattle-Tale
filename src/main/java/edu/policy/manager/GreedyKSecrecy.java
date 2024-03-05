@@ -293,6 +293,9 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 catch(Exception e){
                     e.printStackTrace();
                 }
+                for (Map.Entry<Cell, Integer> entry : cellHolder.entrySet()) {
+                    cellHolder.replace(entry.getKey(),0);
+                }
                 if (Utils.listEqualsIgnoreOrder(toHide, trackTrueHide))
                     onDetectTrueHide = onDetect;
                 else
