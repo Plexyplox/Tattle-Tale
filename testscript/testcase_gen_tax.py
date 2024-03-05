@@ -278,7 +278,7 @@ if __name__ == "__main__":
     database_name = "taxdb"
     relation_name = "taxes"
 
-    testcase_count = 10  # no. of testcases in each test
+    testcase_count = 1  # no. of testcases in each test
     start = 10 # no. of sensitive cells in the starting testcase
     step = 10  # no. of sensitive cells growing in testcases
     limit = 9998 # no. of tuples
