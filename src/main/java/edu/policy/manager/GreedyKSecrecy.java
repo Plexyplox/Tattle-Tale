@@ -65,6 +65,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
      */
     public List<Cell> greedyKDenBreadthFirst(List<Cell> senCells) {
         HashMap<Cell,Integer> cellHolder = new HashMap<>();
+        HashMap<List<Cell>, Integer> cueHolder = new HashMap<>();
         int level = 1;
         List<Cell> trueHide = new ArrayList<>(senCells); // true hide list of all time
         List<Cell> trackTrueHide = new ArrayList<>(); // true hide for each level
@@ -194,9 +195,11 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
             }
 
             if ((pruneHolder != null) && (level == 1)){
+
                 pruneHolder.forEach(p -> thePruned.addAll(p.getCells()));
                 List<Cell> cleanPrune = new ArrayList<>(new HashSet<>(thePruned));
                 cleanPrune.forEach(c -> cellHolder.put(c,0));
+                pruneHolder.forEach(p -> cueHolder.put(p.getCells(),0));
                 try{
                     FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\spinMeRound.txt",true);
                     writer.write(System.lineSeparator());
@@ -205,13 +208,19 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     writer.write("k-value = ");
                     writer.write(Double.toString(k_percentage));
                     writer.write(System.lineSeparator());
+                    writer.write("Run: ");
+                    writer.write(check);
+                    writer.write(System.lineSeparator());
                     writer.write("Pruned Cuesize: ");
+                    writer.write(Integer.toString(pruneHolder.size()));
+                    writer.write(System.lineSeparator());
+                    writer.write("Pruned Cell size: ");
                     writer.write(Integer.toString(thePruned.size()));
                     writer.write(System.lineSeparator());
-                    writer.write("Unique Cue Number: ");
+                    writer.write("Unique Cell Number: ");
                     writer.write(Integer.toString(cellHolder.size()));
                     writer.write(System.lineSeparator());
-                    writer.write("Unique Cues: ");
+                    writer.write("TrueHide: ");
                     writer.write(Integer.toString(trueHide.size()));
                     writer.write(System.lineSeparator());
                     writer.write("Full Set of Cues: ");
@@ -241,6 +250,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     onDetect.forEach(o -> flatDetect.addAll(o.getCells()));
                     List<Cell> cleanDetect = new ArrayList<>(new HashSet<>(flatDetect));
                     int cnt = 0;
+                    int rnt = 0;
                     try{
                         FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\kUSeeIt.txt",true);
                         writer.write(System.lineSeparator());
@@ -272,10 +282,66 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     catch(Exception e){
                         e.printStackTrace();
                     }
+                    /*
+                    try{
+                        FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\cueUSeeIt.txt",true);
+                        writer.write(System.lineSeparator());
+                        writer.write("% K-Percentile Data %");
+                        writer.write(System.lineSeparator());
+                        writer.write("k-value = ");
+                        writer.write(Double.toString(k_percentage));
+                        writer.write(System.lineSeparator());
+                        for (int i = 0; i < onDetect.size(); i++){
+                            for (Map.Entry<List<Cell>, Integer> entry : cueHolder.entrySet()) {
+                                if (Utils.listEqualsIgnoreOrder(onDetect.get(i).getCells(),entry.getKey())){
+                                    cueHolder.replace(entry.getKey(),cueHolder.get(entry.getKey()) + 1);
+                                    rnt++;
+                                }
+                            }
+                        }
+                        writer.write("Run: ");
+                        writer.write(check);
+                        writer.write(System.lineSeparator());
+                        writer.write("At level ");
+                        writer.write(Integer.toString(level));
+                        writer.write(" cue was redetected: ");
+                        writer.write(Integer.toString(rnt));
+                        writer.write(" times");
+                        writer.write(System.lineSeparator());
+                        writer.write(System.lineSeparator());
+                        writer.close();
+                    }
+                    catch(Exception e){
+                        e.printStackTrace();
+                    }
+                     */
                 }
+                /*
                 try {
                     FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\cueReCount.txt",true);
                     writer.write("Cue Redetect Data");
+                    writer.write(System.lineSeparator());
+                    writer.write("Run: ");
+                    writer.write(check);
+                    writer.write(System.lineSeparator());
+                    writer.write("Level: ");
+                    writer.write(Integer.toString(level));
+                    writer.write(System.lineSeparator());
+                    for (Map.Entry<List<Cell>, Integer> entry : cueHolder.entrySet()) {
+                        writer.write("Key: " + entry.getKey() + ", Redetect: " + entry.getValue());
+                        writer.write(System.lineSeparator());
+                    }
+                    writer.write(System.lineSeparator());
+                    writer.close();
+                }
+                catch(Exception e){
+                    e.printStackTrace();
+                }
+
+                 */
+                try {
+                    FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\cellReCount.txt",true);
+                    writer.write("Cell Redetect Data");
                     writer.write(System.lineSeparator());
                     writer.write("Run: ");
                     writer.write(check);
