@@ -7,6 +7,7 @@ import edu.policy.model.AttributeType;
 import edu.policy.model.constraint.*;
 import edu.policy.model.cue.CueSet;
 import edu.policy.model.data.Session;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -64,8 +65,10 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
      * @return truehide list of hidden cells
      */
     public List<Cell> greedyKDenBreadthFirst(List<Cell> senCells) {
-        HashMap<Cell,Integer> cellHolder = new HashMap<>();
-        HashMap<List<Cell>, Integer> cueHolder = new HashMap<>();
+        //HashMap<Cell,Integer> cellHolder = new HashMap<>();
+        //HashMap<List<Cell>, Integer> cueHolder = new HashMap<>();
+        HashSet<HashMap<Cell,HashMap<CueSet,Integer>>> notDomain = new HashSet<>();
+        HashSet<HashMap<CueSet,HashMap<CueSet,Integer>>> pedigree = new HashSet<>();
         int level = 1;
         List<Cell> trueHide = new ArrayList<>(senCells); // true hide list of all time
         List<Cell> trackTrueHide = new ArrayList<>(); // true hide for each level
@@ -123,8 +126,8 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
 
                 if (onDetectTrueHide != null) {
                     onDetectTrueHide.removeIf(cueSet -> hasIntersection(cueSet.getCells(), trueHide));
-                    trackTrueHide.addAll(MinimumSetCover.greedyHeuristic(onDetectTrueHide));
-                    trueHide.addAll(trackTrueHide);
+                    //trackTrueHide.addAll(MinimumSetCover.greedyHeuristic(onDetectTrueHide));
+                    //trueHide.addAll(trackTrueHide);
                 }
 
                 long endTime_MVC = new Date().getTime();
@@ -177,23 +180,47 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 }
 
             }
-            List<CueSet> pruneHolder = new ArrayList<>();
-            List<Cell> thePruned = new ArrayList<>();
+            //List<CueSet> pruneHolder = new ArrayList<>();
+            //List<Cell> thePruned = new ArrayList<>();
+
             if (level == 1) {
                 List<CueSet> bestCueSets = new ArrayList<>();
                 for (Cell cell: trueHide) {
                     List<CueSet> cueSetsToPrune = cuesets.stream().filter(cueSet -> cueSet.getSenCell().equals(cell)).collect(Collectors.toList());
                     List<CueSet> prunedCueSets = KPrune(cell, cueSetsToPrune);
-                    if (prunedCueSets != null)
+                    if (prunedCueSets != null){
                         bestCueSets.addAll(prunedCueSets);
-                    pruneHolder.addAll(cueSetsToPrune);
-                    pruneHolder.removeAll(bestCueSets);
+                        for (CueSet bC: prunedCueSets){
+                            HashMap<CueSet,Integer> d = new HashMap<>();
+                            d.put(bC,level);
+                            HashMap<Cell,HashMap<CueSet,Integer>> afterD = new HashMap<>();
+                            afterD.put(cell,d);
+                            notDomain.add(afterD);
+                        }
+                    }
+
+                    //pruneHolder.addAll(cueSetsToPrune);
+                    //pruneHolder.removeAll(bestCueSets);
                 }
                 List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
                 trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
                 trueHide.addAll(trackTrueHide);
             }
-
+            if (level > 1){
+                List<CueSet> bestCueSets = new ArrayList<>();
+                List<CueSet> notRealListTestingOnly = new ArrayList<>();
+                for (Cell cell: trueHide){
+                    List<CueSet> cueSetsToPrune = cuesets.stream().filter(cueSet -> cueSet.getSenCell().equals(cell)).collect(Collectors.toList());
+                    List<CueSet> prunedCueSets = KPrune(cell, cueSetsToPrune);
+                    if (prunedCueSets != null){
+                        for (CueSet pC: prunedCueSets){
+                            notRealListTestingOnly.add(pC);
+                        }
+                    }
+                }
+                System.out.println("bombdiggity");
+            }
+/*
             if ((pruneHolder != null) && (level == 1)){
 
                 pruneHolder.forEach(p -> thePruned.addAll(p.getCells()));
@@ -234,10 +261,28 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     e.printStackTrace();
                 }
             }
+            */
             logger.info(String.format("%d-th level: %d cells in the true hide set.", cuesetDetectorInvokeCounter, trueHide.size()));
             hiddenCellsFanOut.add(trueHide.size());
             level += 1;
-
+            /*
+            try{
+                FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\onTheLevel.txt",true);
+                writer.write("K-Den Run");
+                writer.write(System.lineSeparator());
+                writer.write("Run: ");
+                writer.write(check);
+                writer.write(System.lineSeparator());
+                writer.write("Level: ");
+                writer.write(Integer.toString(level));
+                writer.write(System.lineSeparator());
+                writer.write(System.lineSeparator());
+                writer.close();
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+             */
             if (!toHide.isEmpty()) {
 
                 hideCells.addAll(toHide); // hide this cell
@@ -245,7 +290,9 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
 
                 // Get the cuesets of tohide cell lists
                 onDetect = cueDetector.detect(schemaDependencies, toHide);
+                /*
                 if (level > 1){
+
                     List<Cell> flatDetect = new ArrayList<>();
                     onDetect.forEach(o -> flatDetect.addAll(o.getCells()));
                     List<Cell> cleanDetect = new ArrayList<>(new HashSet<>(flatDetect));
@@ -282,7 +329,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     catch(Exception e){
                         e.printStackTrace();
                     }
-                    /*
+
                     try{
                         FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\cueUSeeIt.txt",true);
                         writer.write(System.lineSeparator());
@@ -314,9 +361,9 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     catch(Exception e){
                         e.printStackTrace();
                     }
-                     */
+
                 }
-                /*
+
                 try {
                     FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\cueReCount.txt",true);
                     writer.write("Cue Redetect Data");
@@ -337,8 +384,6 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 catch(Exception e){
                     e.printStackTrace();
                 }
-
-                 */
                 try {
                     FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\cellReCount.txt",true);
                     writer.write("Cell Redetect Data");
@@ -359,9 +404,13 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 catch(Exception e){
                     e.printStackTrace();
                 }
+ */
+                /*
                 for (Map.Entry<Cell, Integer> entry : cellHolder.entrySet()) {
                     cellHolder.replace(entry.getKey(),0);
                 }
+
+                 */
                 if (Utils.listEqualsIgnoreOrder(toHide, trackTrueHide))
                     onDetectTrueHide = onDetect;
                 else

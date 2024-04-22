@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.nio.charset.Charset;
 import java.util.*;
 
 public class GreedyPerfectSecrecy extends GreedyAlgorithm {
@@ -119,7 +120,10 @@ public class GreedyPerfectSecrecy extends GreedyAlgorithm {
      */
 
     public void greedyPerfectDen(List<Cell> senCells) {
-
+        byte[] array = new byte[7]; // length is bounded by 7
+        new Random().nextBytes(array);
+        String generatedString = new String(array, Charset.forName("UTF-8"));
+        String check = new String(String.valueOf((Objects.hash(generatedString))));
         if (!hideCells.containsAll(senCells))
             hideCells = Utils.unionCells(hideCells, senCells);
 
@@ -148,7 +152,7 @@ public class GreedyPerfectSecrecy extends GreedyAlgorithm {
             logger.info(String.format("%d cuesets being detected.", onDetect.size() + pbdOnDetect.size()));
         }
 
-        //int level = 1;
+        int level = 1;
         // main while loop
         while (!cuesets.isEmpty()) {
 
@@ -272,6 +276,26 @@ public class GreedyPerfectSecrecy extends GreedyAlgorithm {
 
             }
             level++;
+
+             */
+            level++;
+            /*
+            try{
+                FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\onTheLevel.txt",true);
+                writer.write("Full Den Run");
+                writer.write(System.lineSeparator());
+                writer.write("Run: ");
+                writer.write(check);
+                writer.write(System.lineSeparator());
+                writer.write("Level: ");
+                writer.write(Integer.toString(level));
+                writer.write(System.lineSeparator());
+                writer.write(System.lineSeparator());
+                writer.close();
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
 
              */
         }
