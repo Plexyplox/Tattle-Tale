@@ -9,6 +9,7 @@ import edu.policy.model.cue.CueSet;
 import edu.policy.model.data.Session;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.util.Assert;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -197,6 +198,8 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 trueHide.addAll(trackTrueHide);
             }
             if (level > 1){
+                int trk = 0;
+                int lTrk = trk;
                 if (onDetectTrueHide.size() < 1) break;
                 else {
                     List<CueSet> bestCueSets = new ArrayList<>();
@@ -207,19 +210,23 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                         if (!childrenCuesets.isEmpty()){
                             for (CueSet cue: childrenCuesets){
                                 String send = String.valueOf(cue.getLeakageToParent());
-                                HashSet<CueSet> hashPrune = new HashSet<>(cueDetector.detect(schemaDependencies,cue.getCells()));
+                                //HashSet<CueSet> hashPrune = new HashSet<>(cueDetector.detect(schemaDependencies,cue.getCells()));
                                 //cueSetsToPrune.removeIf(cueSet -> hasIntersection(cueSet.getCells(), hideCells));
-                                hashPrune.removeIf(cueSet -> hasIntersection(cueSet.getCells(), trueHide));
-                                List<CueSet> cueSetsToPrune = new ArrayList<>(hashPrune);
-                                List<CueSet> fPrune = KPrune(h,cueSetsToPrune);
-                                if (fPrune != null){
-                                    List<CueSet> pruned = KPruneMod(cue.getCells().get(0),fPrune,send);
-                                    if (pruned != null){
-                                        bestCueSets.addAll(fPrune);
-                                        bestCueSets.addAll(pruned);
-                                        for (CueSet p: pruned){
-                                            ExplicitParentage e = new ExplicitParentage(null,p,h,cue,level,level);
-                                            parentage.add(e);
+                                List<CueSet> cueSetsToPrune = new ArrayList<>(cueDetector.detect(schemaDependencies,cue.getCells()));
+                                trk = trk + cueSetsToPrune.size();
+                                cueSetsToPrune.removeIf(cueSet -> hasIntersection(cueSet.getCells(), trueHide));
+                                lTrk = lTrk + cueSetsToPrune.size();
+                                if (!cueSetsToPrune.isEmpty()){
+                                    List<CueSet> fPrune = KPrune(h,cueSetsToPrune);
+                                    if (fPrune != null){
+                                        List<CueSet> pruned = KPruneMod(cue.getCells().get(0),fPrune,send);
+                                        if (pruned != null){
+                                            bestCueSets.addAll(fPrune);
+                                            bestCueSets.addAll(pruned);
+                                            for (CueSet p: pruned){
+                                                ExplicitParentage e = new ExplicitParentage(null,p,h,cue,level,level);
+                                                parentage.add(e);
+                                            }
                                         }
                                     }
                                 }
@@ -230,7 +237,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
                     trueHide.addAll(trackTrueHide);
                 }
-
+                System.out.println("doctor?");
             }
 
             logger.info(String.format("%d-th level: %d cells in the true hide set.", cuesetDetectorInvokeCounter, trueHide.size()));
@@ -294,15 +301,15 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
         // Optimization 1: cannot open cuesets which can lead to full leakage
         List<CueSet> bestCueSets = cueSetsOfSenCell.stream().filter(cueSet -> cueSet.getLeakageToParent() == 1)
                                                             .collect(Collectors.toList());
-        HashSet<CueSet> hashCue = new HashSet<>(cueSetsOfSenCell);
-        HashSet<CueSet> hashBest = new HashSet<>(bestCueSets);
-        hashCue.removeAll(hashBest);
-        //cueSetsOfSenCell.removeAll(bestCueSets);
-        if (hashCue.size() < 1){
+        //HashSet<CueSet> hashCue = new HashSet<>(cueSetsOfSenCell);
+        //HashSet<CueSet> hashBest = new HashSet<>(bestCueSets);
+        //hashCue.removeAll(hashBest);
+        cueSetsOfSenCell.removeAll(bestCueSets);
+        if (cueSetsOfSenCell.isEmpty()){
             return bestCueSets;
         }
-        cueSetsOfSenCell.clear();
-        cueSetsOfSenCell = new ArrayList<>(hashCue);
+        //cueSetsOfSenCell.clear();
+        //cueSetsOfSenCell = new ArrayList<>(hashCue);
         if (senCell.getCellType().equals(AttributeType.INTEGER) || senCell.getCellType().equals(AttributeType.DOUBLE)) {
             // Optimization for continuous domain attributes:
             // sort the cueset list in **descending order** w.r.t the leakage to the parent
@@ -327,7 +334,32 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
             }
         }
         else if (senCell.getCellType().equals(AttributeType.STRING)) {
-
+            HashSet<CueSet> nullSet = new HashSet<>();
+            for (CueSet c : cueSetsOfSenCell){
+                String check = c.getMinusString();
+                if (check == null){
+                    nullSet.add(c);
+                    //cueSetsOfSenCell.remove(c);
+                }
+            }
+            if(!nullSet.isEmpty()){
+                List<CueSet> nullList = new ArrayList<>(nullSet);
+                cueSetsOfSenCell.removeAll(nullList);
+                nullList.sort(Comparator.comparing(CueSet::getLeakageToParent).reversed());
+                while (!isDeniable(senCell,k_percentage)){
+                    if (nullList.isEmpty()){
+                        System.err.println("Abandon all hope ye who enter here");
+                    }
+                    CueSet low = nullList.get(0);
+                    assert low!= null;
+                    bestCueSets.add(low);
+                    nullList.remove(low);
+                    LeakageCalculator.joint_state(senCell, nullList, session);
+                }
+                if (cueSetsOfSenCell.isEmpty()){
+                    return bestCueSets;
+                }
+            }
             // Optimization for discrete domain attributes:
 
             Map<String, Long> minusStringOcc = cueSetsOfSenCell.stream().collect(
@@ -339,16 +371,16 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 String minusStringMinOcc = Collections.min(minusStringOcc.entrySet(), Map.Entry.comparingByValue()).getKey();
                 List<CueSet> toAddBestCuesets = cueSetsOfSenCell.stream().filter(cueSet -> cueSet.getMinusString().equals(minusStringMinOcc)).collect(Collectors.toList());
 
-                //bestCueSets.addAll(toAddBestCuesets);
-                hashBest.addAll(toAddBestCuesets);
-                //cueSetsOfSenCell.removeAll(toAddBestCuesets);
-                hashCue.removeAll(toAddBestCuesets);
-                cueSetsOfSenCell.clear();
-                cueSetsOfSenCell = new ArrayList<>(hashCue);
+                bestCueSets.addAll(toAddBestCuesets);
+                //hashBest.addAll(toAddBestCuesets);
+                cueSetsOfSenCell.removeAll(toAddBestCuesets);
+                //hashCue.removeAll(toAddBestCuesets);
+                //cueSetsOfSenCell.clear();
+                //cueSetsOfSenCell = new ArrayList<>(hashCue);
                 minusStringOcc.remove(minusStringMinOcc);
             }
-            bestCueSets.clear();
-            bestCueSets = new ArrayList<>(hashBest);
+            //bestCueSets.clear();
+            //bestCueSets = new ArrayList<>(hashBest);
         }
 
         LeakageCalculator.joint_state(senCell, cueSetsOfSenCell, session);
@@ -366,15 +398,15 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
         // Optimization 1: cannot open cuesets which can lead to full leakage
         List<CueSet> bestCueSets = cueSetsOfSenCell.stream().filter(cueSet -> cueSet.getLeakageToParent() == 1)
                 .collect(Collectors.toList());
-        HashSet<CueSet> hashCue = new HashSet<>(cueSetsOfSenCell);
-        HashSet<CueSet> hashBest = new HashSet<>(bestCueSets);
-        hashCue.removeAll(hashBest);
-        //cueSetsOfSenCell.removeAll(bestCueSets);
-        if (hashCue.size() < 1){
+        //HashSet<CueSet> hashCue = new HashSet<>(cueSetsOfSenCell);
+        //HashSet<CueSet> hashBest = new HashSet<>(bestCueSets);
+        //hashCue.removeAll(hashBest);
+        cueSetsOfSenCell.removeAll(bestCueSets);
+        if (cueSetsOfSenCell.isEmpty()){
             return bestCueSets;
         }
-        cueSetsOfSenCell.clear();
-        cueSetsOfSenCell = new ArrayList<>(hashCue);
+        //cueSetsOfSenCell.clear();
+        //cueSetsOfSenCell = new ArrayList<>(hashCue);
         if (senCell.getCellType().equals(AttributeType.INTEGER) || senCell.getCellType().equals(AttributeType.DOUBLE)) {
             // Optimization for continuous domain attributes:
             // sort the cueset list in **descending order** w.r.t the leakage to the parent
@@ -399,28 +431,53 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
             }
         }
         else if (senCell.getCellType().equals(AttributeType.STRING)) {
-
+            HashSet<CueSet> nullSet = new HashSet<>();
+            for (CueSet c : cueSetsOfSenCell){
+                String check = c.getMinusString();
+                if (check == null){
+                    nullSet.add(c);
+                }
+            }
+            if(!nullSet.isEmpty()){
+                List<CueSet> nullList = new ArrayList<>(nullSet);
+                cueSetsOfSenCell.removeAll(nullList);
+                nullList.sort(Comparator.comparing(CueSet::getLeakageToParent).reversed());
+                while (!isDeniable(senCell,k_percentage)){
+                    if (nullList.isEmpty()){
+                        System.err.println("Abandon all hope ye who enter here");
+                    }
+                    CueSet low = nullList.get(0);
+                    assert low!= null;
+                    bestCueSets.add(low);
+                    nullList.remove(low);
+                    LeakageCalculator.joint_state(senCell, nullList, session);
+                }
+                if (cueSetsOfSenCell.isEmpty()){
+                    return bestCueSets;
+                }
+            }
             // Optimization for discrete domain attributes:
-
             Map<String, Long> minusStringOcc = cueSetsOfSenCell.stream().collect(
-                    Collectors.groupingBy(CueSet::getMinusString, Collectors.counting()));
-
+                    Collectors.groupingBy(CueSet -> CueSet.getMinusString() == null ? "nullobjectrefenceremove" : CueSet.getMinusString(), Collectors.counting()));
             while (!isDeniable(senCell, minusStringOcc.size(), k)) {
 
                 logger.debug(String.format("Starting iteration, current cueset list size: %d", cueSetsOfSenCell.size()));
+
                 String minusStringMinOcc = Collections.min(minusStringOcc.entrySet(), Map.Entry.comparingByValue()).getKey();
                 List<CueSet> toAddBestCuesets = cueSetsOfSenCell.stream().filter(cueSet -> cueSet.getMinusString().equals(minusStringMinOcc)).collect(Collectors.toList());
 
-                //bestCueSets.addAll(toAddBestCuesets);
-                //cueSetsOfSenCell.removeAll(toAddBestCuesets);
-                hashBest.addAll(toAddBestCuesets);
-                hashCue.removeAll(toAddBestCuesets);
-                cueSetsOfSenCell.clear();
-                cueSetsOfSenCell = new ArrayList<>(hashCue);
+                bestCueSets.addAll(toAddBestCuesets);
+                cueSetsOfSenCell.removeAll(toAddBestCuesets);
+                    //hashBest.addAll(toAddBestCuesets);
+                    //hashCue.removeAll(toAddBestCuesets);
+                    //cueSetsOfSenCell.clear();
+                    //cueSetsOfSenCell = new ArrayList<>(hashCue);
                 minusStringOcc.remove(minusStringMinOcc);
             }
-            bestCueSets.clear();
-            bestCueSets = new ArrayList<>(hashBest);
+                //bestCueSets.clear();
+                //bestCueSets = new ArrayList<>(hashBest);
+
+
         }
 
         LeakageCalculator.joint_state(senCell, cueSetsOfSenCell, session);
