@@ -198,8 +198,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 trueHide.addAll(trackTrueHide);
             }
             if (level > 1){
-                int trk = 0;
-                int lTrk = trk;
+                int trk = 0,lTrk = 0;
                 if (onDetectTrueHide.size() < 1) break;
                 else {
                     List<CueSet> bestCueSets = new ArrayList<>();
@@ -208,11 +207,24 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                         List<ExplicitParentage> children = parentage.stream().filter(child -> child.getParentCell().equals(h) && child.getCellLevel() == finalLevel - 1).collect(Collectors.toList());
                         List<CueSet> childrenCuesets = children.stream().map(ExplicitParentage::getCuesetIdentity).collect(Collectors.toList());
                         if (!childrenCuesets.isEmpty()){
+                            List<Cell> listThing = new ArrayList<>(MinimumSetCover.greedyHeuristic(childrenCuesets));
+                            toHide.addAll(listThing);
+                            /*
+                            for (Cell cell: listThing){
+                                ExplicitParentage temp = new ExplicitParentage(cell, null, h, null, level, level);
+                            }
+                            
+                             */
+                            /*
                             for (CueSet cue: childrenCuesets){
                                 String send = String.valueOf(cue.getLeakageToParent());
                                 //HashSet<CueSet> hashPrune = new HashSet<>(cueDetector.detect(schemaDependencies,cue.getCells()));
                                 //cueSetsToPrune.removeIf(cueSet -> hasIntersection(cueSet.getCells(), hideCells));
-                                List<CueSet> cueSetsToPrune = new ArrayList<>(cueDetector.detect(schemaDependencies,cue.getCells()));
+                                //List<CueSet> cueSetsToPrune = new ArrayList<>(cueDetector.detect(schemaDependencies,cue.getCells()));
+                                List<Cell> listThing = new ArrayList<>(MinimumSetCover.greedyHeuristic(childrenCuesets));
+                                toHide.addAll(listThing);
+                                /*
+                                List<CueSet> cueSetsToPrune = new ArrayList<>(MinimumSetCover.greedyHeuristic(childrenCuesets));
                                 trk = trk + cueSetsToPrune.size();
                                 cueSetsToPrune.removeIf(cueSet -> hasIntersection(cueSet.getCells(), trueHide));
                                 lTrk = lTrk + cueSetsToPrune.size();
@@ -230,12 +242,18 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                                         }
                                     }
                                 }
+
+
                             }
+                        */
                         }
                     }
+                    /*
                     List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
                     trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
                     trueHide.addAll(trackTrueHide);
+
+                     */
                 }
                 System.out.println("doctor?");
             }
