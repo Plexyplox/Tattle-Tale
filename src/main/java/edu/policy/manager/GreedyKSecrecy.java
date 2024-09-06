@@ -202,20 +202,42 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 if (onDetectTrueHide.size() < 1) break;
                 else {
                     List<CueSet> bestCueSets = new ArrayList<>();
+
                     for (Cell h: senCells){
                         int finalLevel = level;
                         List<ExplicitParentage> children = parentage.stream().filter(child -> child.getParentCell().equals(h) && child.getCellLevel() == finalLevel - 1).collect(Collectors.toList());
                         List<CueSet> childrenCuesets = children.stream().map(ExplicitParentage::getCuesetIdentity).collect(Collectors.toList());
                         if (!childrenCuesets.isEmpty()){
-                            List<Cell> listThing = new ArrayList<>(MinimumSetCover.greedyHeuristic(childrenCuesets));
-                            toHide.addAll(listThing);
+                            childrenCuesets.sort(Comparator.comparing(CueSet::getLeakageToParent).reversed());
+
+                            //System.out.println(isDeniable(h,k_percentage));
+                            //List<CueSet> checkReturnsVal = KPrune(h,childrenCuesets);
+                            List<Cell> minimalCells = new ArrayList<>(MinimumSetCover.greedyHeuristic(childrenCuesets));
+                            List<CueSet> detection = cueDetector.detect(schemaDependencies,minimalCells);
+                            //List<CueSet> prunedChildren = KPrune(h,detection);
+
+                            bestCueSets.addAll(detection);
+                            //toHide.addAll(jim);
+                            //List<Cell> listTestSize =  new ArrayList<>(MinimumSetCover.greedyHeuristic(checkReturnsVal));
+                            /*
+                            List<CueSet> test = cueDetector.detect(schemaDependencies,listThing);
+                            List<CueSet> moreTest = new ArrayList<>();
+                            for (Cell item: listThing){
+                                List<CueSet> holder = (KPrune(item,test));
+                                if (holder != null){
+                                    if (!holder.isEmpty()) moreTest.addAll(holder);
+                                }
+                            }
+                            List<Cell> listThing2 = new ArrayList<>(MinimumSetCover.greedyHeuristic(childrenCuesets));
+                            //this line is only used for testing purposes
+                            System.out.println("ughs");
+                            toHide.addAll(listThing2);
                             /*
                             for (Cell cell: listThing){
                                 ExplicitParentage temp = new ExplicitParentage(cell, null, h, null, level, level);
                             }
-                            
-                             */
-                            /*
+
+
                             for (CueSet cue: childrenCuesets){
                                 String send = String.valueOf(cue.getLeakageToParent());
                                 //HashSet<CueSet> hashPrune = new HashSet<>(cueDetector.detect(schemaDependencies,cue.getCells()));
@@ -247,15 +269,30 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                             }
                         */
                         }
+                        //this line is only used for testing purposes
+                        //System.out.println("jaerry?");
                     }
-                    /*
+
                     List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
                     trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
                     trueHide.addAll(trackTrueHide);
 
+
+                    /*
+                    List<Cell> test = toHide.stream().filter(c->!trueHide.contains(c)).collect(Collectors.toList());
+                    List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
+                    trackTrueHide.addAll(intersection(test, flattenBestCueSets));
+                    //this line is only used for testing purposes
+                    //System.out.println("need?");
+                    trueHide.addAll(trackTrueHide);
+
                      */
+
+                    //this line is only used for testing purposes
+                    //System.out.println("need?");
                 }
-                System.out.println("doctor?");
+                //this line is only used for testing purposes
+                //System.out.println("doctor?");
             }
 
             logger.info(String.format("%d-th level: %d cells in the true hide set.", cuesetDetectorInvokeCounter, trueHide.size()));
