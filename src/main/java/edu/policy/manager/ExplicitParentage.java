@@ -18,9 +18,9 @@ public class ExplicitParentage {
         this.cellIdentity = cellIdentity;
         this.cuesetIdentity = cuesetIdentity;
         this.parentCell = parentCell;
-        this.parentCueset = parentCuset;
+        this.parentCueset = parentCueset;
         this.cellLevel = cellLevel;
-        this.cuesetLevel = cusetLevel;
+        this.cuesetLevel = cuesetLevel;
     }
     public Cell getCellIdentity(){
         return this.cellIdentity;
@@ -40,10 +40,10 @@ public class ExplicitParentage {
     public Integer getCuesetLevel(){
         return this.cuesetLevel;
     }
-    public void setParentage(Cell parentCell, CueSet parentCuset, Integer cellLevel, Integer cusetLevel){
+    public void setParentage(Cell parentCell, CueSet parentCueset, Integer cellLevel, Integer cuesetLevel){
         this.parentCell = parentCell;
-        this.parentCueset = parentCuset;
+        this.parentCueset = parentCueset;
         this.cellLevel = cellLevel;
-        this.cuesetLevel = cusetLevel;
+        this.cuesetLevel = cuesetLevel;
     }
 }
