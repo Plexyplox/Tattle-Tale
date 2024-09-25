@@ -51,49 +51,21 @@ public class MinimumSetCover {
 
 
     }
-    public static List<Cell> greedyEdgeVC(List<CueSet> cueSetsList){
+    public static List<Cell> greedyHueRdx(List<CueSet> cueSetsList){
+        List<CueSet> cueSetListCopy = new ArrayList<>(cueSetsList);
         List<Cell> retVal = new ArrayList<>();
-        List<CueSet> copyList = new ArrayList<>(cueSetsList);
-        List<Cell> flattenCuesetList = copyList.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
-        Map<Cell, Long> cellOccurrence = flattenCuesetList.stream().collect(Collectors.groupingBy(cell-> cell, Collectors.counting()));
-        List<CueSet> iter = new ArrayList<>(copyList);
-        List<CueSet> addCopyList = new ArrayList<>(copyList);
-        for (CueSet cue: copyList){
-            if (!hasIntersection(cue.getCells(),retVal)){
-                Cell champ = null;
-                for (Cell c: cue.getCells()){
-                    if (champ == null) champ = c;
-                    else{
-                        if (cellOccurrence.get(c) > cellOccurrence.get(champ)) champ = c;
-                    }
-                }
-                retVal.add(champ);
-            }
+        Boolean done = false;
+
+        List<Cell> flattenCuesetList = cueSetListCopy.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
+
+        while (done == false){
+
         }
-        iter.removeIf(cueSet -> !hasIntersection(cueSet.getCells(),retVal));
-        Map<Cell, Integer> lossCnt = new HashMap<>();
-        for (Cell c: retVal){
-            lossCnt.put(c,0);
-        }
-        //for
         return retVal;
     }
     public static List<Cell> expCover(List<CueSet> cueSetsList){
         List<Cell> retVal = new ArrayList<>();
-        Instant initial,end,loopEnt,loop;
-        long construct,probe;
-        initial = Instant.now();
-        List<Cell> primer = MinimumSetCover.greedyEdgeVC(cueSetsList);
-        end = Instant.now();
-        construct = 4 * Duration.between(initial,end).toMillis();
-        loopEnt = Instant.now();
-        loop = Instant.now();
-        probe = Duration.between(loopEnt,loop).toMillis();
-        while (probe<construct){
 
-            loop = Instant.now();
-            probe = Duration.between(loopEnt,loop).toMillis();
-        }
         return retVal;
     }
     private static boolean hasIntersection(List<Cell> list1, List<Cell> list2) {
