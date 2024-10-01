@@ -65,8 +65,160 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
      * @return truehide list of hidden cells
      */
     public List<Cell> greedyKDenBreadthFirst(List<Cell> senCells) {
+        byte[] array = new byte[7]; // length is bounded by 7
+        new Random().nextBytes(array);
+        String generatedString = new String(array, Charset.forName("UTF-8"));
+        String check = new String(String.valueOf((Objects.hash(generatedString))));
+        if (!hideCells.containsAll(senCells))
+            hideCells = Utils.unionCells(hideCells, senCells);
+
+        List<DataDependency> schemaDependencies = session.getDcs();
+        List<Provenance> schemaPBDs = session.getPbds();
+
+        // Cueset detection
+        List<CueSet> onDetect = cueDetector.detect(schemaDependencies, senCells);
+        Set<CueSet> pbdOnDetect = new HashSet<>();
+        if (!schemaPBDs.isEmpty())
+            pbdOnDetect = pbdCueDetector.detect(schemaPBDs, senCells);
+        cuesetDetectorInvokeCounter += 1;
+        logger.info(String.format("The %d-th time invoking cueset detector.", cuesetDetectorInvokeCounter));
+
+        if (!onDetect.isEmpty()) {
+            cuesets.addAll(onDetect);
+
+            if (!pbdOnDetect.isEmpty()) {
+                cuesets.addAll(pbdOnDetect);
+                totalCuesetSize += pbdOnDetect.size();
+            }
+
+            totalCuesetSize += onDetect.size();
+
+            cueSetsFanOut.add(totalCuesetSize);
+            logger.info(String.format("%d cuesets being detected.", onDetect.size() + pbdOnDetect.size()));
+        }
+
+        int level = 1;
+        // main while loop
+        while (!cuesets.isEmpty()) {
+
+            if (testFanOut)
+                if (cuesetDetectorInvokeCounter >= 6)
+                    break;
+
+            List<Cell> toHide = new ArrayList<>();
+            if (level == 1){
+                if (useMVC) {
+                    List<CueSet> cuesets2HSP = new ArrayList<>();
+                    long startTime_MVC = new Date().getTime();
+                    // test MVC
+                    cuesets.removeIf(cueSet -> hasIntersection(cueSet.getCells(), hideCells));
+                    for (Cell s: senCells){
+                        List<CueSet> potentialLeaks = cuesets.stream().filter(cueSet -> cueSet.getSenCell().equals(s)).collect(Collectors.toList());
+                        if (!potentialLeaks.isEmpty()){
+                            List<CueSet> knownLeaks = KPrune(s,potentialLeaks);
+                            if (knownLeaks != null){
+                                cuesets2HSP.addAll(knownLeaks);
+                            }
+                        }
+                    }
+                    toHide.addAll(MinimumSetCover.greedyHeuristic(cuesets2HSP));
+                    long endTime_MVC = new Date().getTime();
+                    long timeElapsed = endTime_MVC - startTime_MVC;
+                    logger.info(String.format("Finished executing MVC; use time: %d ms.", timeElapsed));
+
+                }
+                else {
+                    for (CueSet cueSet: cuesets) {
+
+                        cueSet.setChosenToBeHidden(Boolean.TRUE);
+
+                        if (!hasIntersection(cueSet.getCells(), toHide)
+                                && !hasIntersection(cueSet.getCells(), hideCells) ) { // no cell in cueset is hidden
+
+                            Cell cell;
+
+                            if (randomHiddenCellChoosing)
+                                cell = cueSet.getCells().get(rand.nextInt(cueSet.getCells().size()));
+                            else
+                                cell = cueSet.getCells().get(0); // get the first cell in the cueset
+
+                            toHide.add(cell); // for detect the cuesets of this cell
+
+                        }
+                    }
+                }
+            }
+            else {
+                if (useMVC) {
+
+                    long startTime_MVC = new Date().getTime();
+                    // test MVC
+                    cuesets.removeIf(cueSet -> hasIntersection(cueSet.getCells(), hideCells));
+
+                    toHide.addAll(MinimumSetCover.greedyHeuristic(cuesets));
+
+                    long endTime_MVC = new Date().getTime();
+                    long timeElapsed = endTime_MVC - startTime_MVC;
+                    logger.info(String.format("Finished executing MVC; use time: %d ms.", timeElapsed));
+
+                }
+                else {
+                    for (CueSet cueSet: cuesets) {
+
+                        cueSet.setChosenToBeHidden(Boolean.TRUE);
+
+                        if (!hasIntersection(cueSet.getCells(), toHide)
+                                && !hasIntersection(cueSet.getCells(), hideCells) ) { // no cell in cueset is hidden
+
+                            Cell cell;
+
+                            if (randomHiddenCellChoosing)
+                                cell = cueSet.getCells().get(rand.nextInt(cueSet.getCells().size()));
+                            else
+                                cell = cueSet.getCells().get(0); // get the first cell in the cueset
+
+                            toHide.add(cell); // for detect the cuesets of this cell
+
+                        }
+                    }
+                }
+            }
+            
+            if (!toHide.isEmpty()) {
+
+                hideCells.addAll(toHide); // hide this cell
+                hiddenCellsFanOut.add(hideCells.size());
+                logger.info(String.format("%d cells are hidden at the %d-th level.", hideCells.size(), cuesetDetectorInvokeCounter));
+
+                // Get the cuesets of tohide cell lists
+                onDetect = cueDetector.detect(schemaDependencies, toHide);
+                cuesetDetectorInvokeCounter += 1;
+                if (!schemaPBDs.isEmpty())
+                    pbdOnDetect = pbdCueDetector.detect(schemaPBDs, toHide);
+                logger.info(String.format("The %d-th time invoking cueset detector.", cuesetDetectorInvokeCounter));
+
+                // remove the current cueset from the cueset list
+                cuesets.clear();
+
+                if (!onDetect.isEmpty()){
+                    cuesets.addAll(onDetect);
+                    if (!pbdOnDetect.isEmpty()) {
+                        cuesets.addAll(pbdOnDetect);
+                        totalCuesetSize += pbdOnDetect.size();
+                    }
+
+                    totalCuesetSize += onDetect.size();
+
+                    cueSetsFanOut.add(totalCuesetSize);
+                    logger.info(String.format("%d cuesets being detected.", onDetect.size() + pbdOnDetect.size()));
+                }
+            }
+            level++;
+        }
+        return hideCells;
         //HashMap<Cell,Integer> cellHolder = new HashMap<>();
         //HashMap<List<Cell>, Integer> cueHolder = new HashMap<>();
+        /*
         HashSet<ExplicitParentage> parentage = new HashSet<>();
         int level = 1;
         List<Cell> trueHide = new ArrayList<>(senCells); // true hide list of all time
@@ -227,7 +379,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                             }
                             realTargets = new ArrayList<>(new LinkedHashSet<>(realTargets));
 
-                            /*
+
                             childrenCuesets.sort(Comparator.comparing(CueSet::getLeakageToParent).reversed());
                             //MVC SECTION
                             //List<Cell> minimalCells = new ArrayList<>(MinimumSetCover.greedyHeuristic(childrenCuesets));
@@ -260,7 +412,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
 
 
                             }
-                            */
+
                             for (Cell r: realTargets){
                                 List<CueSet> detectCuesets = cueDetector.detect(schemaDependencies,r);
                                 detectCuesets.retainAll(cuesets);
@@ -283,7 +435,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     trueHide.addAll(trackTrueHide);
 
 
-                    /*
+
                     List<Cell> test = toHide.stream().filter(c->!trueHide.contains(c)).collect(Collectors.toList());
                     List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
                     trackTrueHide.addAll(intersection(test, flattenBestCueSets));
@@ -291,7 +443,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     //System.out.println("need?");
                     trueHide.addAll(trackTrueHide);
 
-                     */
+
 
                     //this line is only used for testing purposes
                     //System.out.println("need?");
@@ -346,6 +498,8 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
         }
 
         return trueHide;
+
+         */
 
     }
     private List<CueSet> minusCells(Cell senCell, List<CueSet> cueSetsOfSenCell) {

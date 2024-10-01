@@ -226,78 +226,7 @@ public class GreedyPerfectSecrecy extends GreedyAlgorithm {
                     logger.info(String.format("%d cuesets being detected.", onDetect.size() + pbdOnDetect.size()));
                 }
             }
-            /*
-            if(level == 1){
-                ArrayList<Cell> cellHolder = new ArrayList<Cell>();
-                Set<Cell> printCells = new HashSet<>();
-                int lim;
-                for (int i = 0; i < cuesets.size(); i++){
-                    lim = cuesets.get(i).getCells().size();
-                    for (int j = 0; j < lim; j++){
-                        cellHolder.add(cuesets.get(i).getCells().get(j));
-                    }
-                }
-                for (int i = 0; i < cellHolder.size(); i++){
-                    printCells.add(cellHolder.get(i));
-                }
-                try{
-                    File cFile = new File("C:\\Users\\Nick\\Desktop\\spinMeRound.txt");
-                    FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\spinMeRound.txt",true);
-                    if (cFile.createNewFile()){
-                        writer.write("Perfect Deniability");
-                        writer.write(System.lineSeparator());
-                    }
-                    else{
-                        writer.write("% New Perfect Deniability %");
-                        writer.write(System.lineSeparator());
-                    }
-                    writer.write("Total cuesets: ");
-                    writer.write(Integer.toString(cuesets.size()));
-                    writer.write(System.lineSeparator());
-                    writer.write("Unique Cue Number: ");
-                    writer.write(Integer.toString(printCells.size()));
-                    writer.write(System.lineSeparator());
-                    writer.write("Unique Cues: ");
-                    writer.write(System.lineSeparator());
-
-                    writer.write("Full Set of Cues: ");
-                    writer.write(System.lineSeparator());
-                    writer.write("Full Set Size: ");
-                    writer.write(Integer.toString(cellHolder.size()));
-                    writer.write(System.lineSeparator());
-
-                    writer.write(System.lineSeparator());
-                    writer.write(System.lineSeparator());
-                    writer.close();
-                }
-                catch(Exception e){
-                    e.printStackTrace();
-                }
-
-            }
             level++;
-
-             */
-            level++;
-            /*
-            try{
-                FileWriter writer = new FileWriter("C:\\Users\\Nick\\Desktop\\onTheLevel.txt",true);
-                writer.write("Full Den Run");
-                writer.write(System.lineSeparator());
-                writer.write("Run: ");
-                writer.write(check);
-                writer.write(System.lineSeparator());
-                writer.write("Level: ");
-                writer.write(Integer.toString(level));
-                writer.write(System.lineSeparator());
-                writer.write(System.lineSeparator());
-                writer.close();
-            }
-            catch(Exception e){
-                e.printStackTrace();
-            }
-
-             */
         }
     }
 
