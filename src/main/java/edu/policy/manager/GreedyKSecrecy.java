@@ -99,6 +99,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
 
         int level = 1;
         // main while loop
+        List<Cell> foundCells = new ArrayList<>(senCells);
         while (!cuesets.isEmpty()) {
 
             if (testFanOut)
@@ -154,9 +155,27 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     long startTime_MVC = new Date().getTime();
                     // test MVC
                     cuesets.removeIf(cueSet -> hasIntersection(cueSet.getCells(), hideCells));
+                    //List<CueSet> test = new ArrayList<>(cuesets);
+                    List<Cell> iterList = new ArrayList<>(hideCells);
+                    iterList.removeAll(foundCells);
+                    List<CueSet> cuesets2HSP = new ArrayList<>();
 
-                    toHide.addAll(MinimumSetCover.greedyHeuristic(cuesets));
-
+                    for (Cell ite: iterList){
+                        List<CueSet> potentialLeaks = cuesets.stream().filter(cueSet -> cueSet.getSenCell().equals(ite)).collect(Collectors.toList());
+                        //test.removeAll(potentialLeaks);
+                        if (!potentialLeaks.isEmpty()){
+                            List<CueSet> knownLeaks = KPrune(ite,potentialLeaks);
+                            if (knownLeaks != null){
+                                cuesets2HSP.addAll(knownLeaks);
+                            }
+                        }
+                    }
+                    toHide.addAll(MinimumSetCover.greedyHeuristic(cuesets2HSP));
+                    foundCells.addAll(hideCells);
+                    Set<Cell> copy = new HashSet<>(foundCells);
+                    foundCells.clear();
+                    foundCells.addAll(copy);
+                    //toHide.addAll(MinimumSetCover.greedyHeuristic(cuesets));
                     long endTime_MVC = new Date().getTime();
                     long timeElapsed = endTime_MVC - startTime_MVC;
                     logger.info(String.format("Finished executing MVC; use time: %d ms.", timeElapsed));
@@ -212,6 +231,9 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                     cueSetsFanOut.add(totalCuesetSize);
                     logger.info(String.format("%d cuesets being detected.", onDetect.size() + pbdOnDetect.size()));
                 }
+            }
+            else if (toHide.isEmpty()){
+                cuesets.clear();
             }
             level++;
         }
