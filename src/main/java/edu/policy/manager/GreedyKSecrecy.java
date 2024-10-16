@@ -245,9 +245,10 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
     private List<CueSet> KPrune(Cell senCell, List<CueSet> cueSetsOfSenCell) {
 
         LeakageCalculator.joint_state(senCell, cueSetsOfSenCell, session);
-
+        //List<String> checks = new ArrayList<>();
         if (isDeniable(senCell, k_percentage))
             return null;
+        //Quick Testing on How much K affects domain hiding
 
         // Optimization 1: cannot open cuesets which can lead to full leakage
         List<CueSet> bestCueSets = cueSetsOfSenCell.stream().filter(cueSet -> cueSet.getLeakageToParent() == 1)
@@ -265,7 +266,6 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
             // Optimization for continuous domain attributes:
             // sort the cueset list in **descending order** w.r.t the leakage to the parent
             cueSetsOfSenCell.sort(Comparator.comparing(CueSet::getLeakageToParent).reversed());
-
             while (!isDeniable(senCell, k_percentage)) {
 
                 logger.debug(String.format("Starting iteration, current cueset list size: %d", cueSetsOfSenCell.size()));
@@ -275,7 +275,6 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
 
                 assert lcs!= null;
                 bestCueSets.add(lcs);
-
                 cueSetsOfSenCell.remove(lcs);
 
                 logger.debug(String.format("After remove lcs from cueset list, current cueset list size: %d", cueSetsOfSenCell.size()));
@@ -325,9 +324,6 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 bestCueSets.addAll(toAddBestCuesets);
                 //hashBest.addAll(toAddBestCuesets);
                 cueSetsOfSenCell.removeAll(toAddBestCuesets);
-                //hashCue.removeAll(toAddBestCuesets);
-                //cueSetsOfSenCell.clear();
-                //cueSetsOfSenCell = new ArrayList<>(hashCue);
                 minusStringOcc.remove(minusStringMinOcc);
             }
             //bestCueSets.clear();
@@ -335,6 +331,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
         }
 
         LeakageCalculator.joint_state(senCell, cueSetsOfSenCell, session);
+
         return bestCueSets;
     }
 //NEW ADDITION FOR PARTIAL DENIABILITY sorry about the all caps

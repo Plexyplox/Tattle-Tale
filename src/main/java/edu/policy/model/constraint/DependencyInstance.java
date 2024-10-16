@@ -22,6 +22,8 @@ public class DependencyInstance {
         this.predicates = clonePredicateList(schemaDep.getSchemaPredicates());
     }
 
+    public String getCnf_form() {return cnf_form;}
+
     public String getRelationName() {
         return relationName;
     }
