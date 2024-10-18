@@ -284,32 +284,6 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
             }
         }
         else if (senCell.getCellType().equals(AttributeType.STRING)) {
-            HashSet<CueSet> nullSet = new HashSet<>();
-            for (CueSet c : cueSetsOfSenCell){
-                String check = c.getMinusString();
-                if (check == null){
-                    nullSet.add(c);
-                    //cueSetsOfSenCell.remove(c);
-                }
-            }
-            if(!nullSet.isEmpty()){
-                List<CueSet> nullList = new ArrayList<>(nullSet);
-                cueSetsOfSenCell.removeAll(nullList);
-                nullList.sort(Comparator.comparing(CueSet::getLeakageToParent).reversed());
-                while (!isDeniable(senCell,k_percentage)){
-                    if (nullList.isEmpty()){
-                        System.err.println("Abandon all hope ye who enter here");
-                    }
-                    CueSet low = nullList.get(0);
-                    assert low!= null;
-                    bestCueSets.add(low);
-                    nullList.remove(low);
-                    LeakageCalculator.joint_state(senCell, nullList, session);
-                }
-                if (cueSetsOfSenCell.isEmpty()){
-                    return bestCueSets;
-                }
-            }
             // Optimization for discrete domain attributes:
 
             Map<String, Long> minusStringOcc = cueSetsOfSenCell.stream().collect(
