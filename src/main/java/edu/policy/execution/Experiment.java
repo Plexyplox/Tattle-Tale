@@ -22,7 +22,7 @@ public class Experiment {
 
     private static List<TestCase> testCases;
 
-    private static final File testCaseDir = new File(System.getProperty("user.dir") + "/testdata/testcases");
+    private static final File testCaseDir = new File("C:\\Users\\Nick\\Documents\\GitHub\\Tattle-Tale\\testdata\\testcases");
 
     private static final File[] testFileNames = testCaseDir.listFiles();
 

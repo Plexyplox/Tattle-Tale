@@ -74,7 +74,7 @@ public class MySQLConnectionManagerDBCP {
         try {
             BasicDataSource dataSource = new BasicDataSource();
 
-            dataSource.setUrl(String.format("jdbc:mysql://%s:%s/mysql", SERVER, PORT));
+            dataSource.setUrl(String.format("jdbc:mysql://%s:%s/data", SERVER, PORT));
             dataSource.setUsername(USER);
             dataSource.setPassword(PASSWORD);
 

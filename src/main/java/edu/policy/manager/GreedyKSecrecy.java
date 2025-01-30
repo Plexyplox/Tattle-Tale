@@ -65,7 +65,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
         int level = 1;
         List<Cell> trueHide = new ArrayList<>(senCells); // true hide list of all time
         List<Cell> trackTrueHide = new ArrayList<>(); // true hide for each level
-
+        List<Cell> foundCells = new ArrayList<>(senCells);
         List<CueSet> onDetectTrueHide = null;
 
         if (!hideCells.containsAll(senCells))
@@ -173,18 +173,40 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                 List<CueSet> bestCueSets = new ArrayList<>();
                 for (Cell cell: trueHide) {
                     List<CueSet> cueSetsToPrune = cuesets.stream().filter(cueSet -> cueSet.getSenCell().equals(cell)).collect(Collectors.toList());
-                    List<CueSet> prunedCueSets = KPrune(cell, cueSetsToPrune);
-                    if (prunedCueSets != null)
-                        bestCueSets.addAll(prunedCueSets);
+                    if (!cueSetsToPrune.isEmpty()){
+                        List<CueSet> prunedCueSets = KPrune(cell, cueSetsToPrune);
+                        if (prunedCueSets != null)
+                            bestCueSets.addAll(prunedCueSets);
+                    }
+
                 }
 
-                List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
-                trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
-                trueHide.addAll(trackTrueHide);
+                //List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
+                //trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
+                List<Cell> quickTest = MinimumSetCover.greedyHeuristic(bestCueSets);
+                //trueHide.addAll(trackTrueHide);
+                trueHide.addAll(quickTest);
             }
-
-
-
+            else if (level > 1){
+                List<CueSet> bestCueSets = new ArrayList<>();
+                List<Cell> iterList = new ArrayList<>(trueHide);
+                iterList.removeAll(foundCells);
+                for (Cell cell: iterList){
+                    List<CueSet> cueSetsToPrune = cuesets.stream().filter(cueSet -> cueSet.getSenCell().equals(cell)).collect(Collectors.toList());
+                    if (!cueSetsToPrune.isEmpty()){
+                        List<CueSet> prunedCueSets = KPrune(cell, cueSetsToPrune);
+                        if (prunedCueSets != null)
+                            bestCueSets.addAll(prunedCueSets);
+                    }
+                }
+                foundCells.clear();
+                foundCells.addAll(trueHide);
+                //List<Cell> flattenBestCueSets = bestCueSets.stream().flatMap(cueSet -> cueSet.getCells().stream()).collect(Collectors.toList());
+                //trackTrueHide.addAll(intersection(toHide, flattenBestCueSets));
+                List<Cell> quickTest = MinimumSetCover.greedyHeuristic(bestCueSets);
+                //trueHide.addAll(trackTrueHide);
+                trueHide.addAll(quickTest);
+            }
 
             logger.info(String.format("%d-th level: %d cells in the true hide set.", cuesetDetectorInvokeCounter, trueHide.size()));
             hiddenCellsFanOut.add(trueHide.size());
@@ -246,7 +268,7 @@ public class GreedyKSecrecy extends GreedyAlgorithm {
                                                             .collect(Collectors.toList());
 
         cueSetsOfSenCell.removeAll(bestCueSets);
-
+        if (cueSetsOfSenCell.isEmpty()) return bestCueSets;
         if (senCell.getCellType().equals(AttributeType.INTEGER) || senCell.getCellType().equals(AttributeType.DOUBLE)) {
             // Optimization for continuous domain attributes:
             // sort the cueset list in **descending order** w.r.t the leakage to the parent
