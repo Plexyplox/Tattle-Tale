@@ -327,5 +327,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
-
+*.csv
 # End of https://www.toptal.com/developers/gitignore/api/intellij,windows,java,python,jupyternotebooks,maven
